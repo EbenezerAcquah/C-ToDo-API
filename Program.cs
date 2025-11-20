@@ -3,6 +3,7 @@ using TodoAPI.Interface;
 using TodoAPI.Middleware;
 using TodoAPI.Models;
 using TodoAPI.Services;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -11,25 +12,19 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+builder.Services.AddScoped<ITodoServices, TodoServices>();
 
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 
+builder.Services.Configure<DbSettings>(builder.Configuration.GetSection("DbSettings"));
 
- // Add  This to in the Program.cs file
-builder.Services.Configure<DbSettings>(builder.Configuration.GetSection("DbSettings")); // Add this line
-builder.Services.AddSingleton<TodoDbContext>(); // Add this line
-
+var dbSettings = builder.Configuration.GetSection("DbSettings").Get<DbSettings>();
+builder.Services.AddDbContext<TodoDbContext>(options =>
+    options.UseSqlServer(dbSettings?.ConnectionString));
 
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
 var app = builder.Build();
-
-// Add this line
-
-{
-    using var scope = app.Services.CreateScope(); // Add this line
-    var context = scope.ServiceProvider; // Add this line
-}
 
 
 if (app.Environment.IsDevelopment())
@@ -39,7 +34,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-app.UseExceptionHandler();
+app.UseExceptionHandler(options => { });
 app.UseAuthorization();
 
 app.MapControllers();

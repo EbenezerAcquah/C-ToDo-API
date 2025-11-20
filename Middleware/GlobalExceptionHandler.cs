@@ -23,6 +23,7 @@ namespace TodoAPI.Middleware
 
             var errorResponse = new ErrorResponse
             {
+                Title = "",
                 Message = exception.Message
             };
 
